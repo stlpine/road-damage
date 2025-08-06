@@ -33,8 +33,8 @@ The goal of this project is to build a robust object detection model capable of 
 2.  **Create a Virtual Environment (Recommended):**
 
     ```bash
-    python -m venv venv
-    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+    python -m venv .venv
+    source .venv/bin/activate
     ```
 
 3.  **Install Dependencies:**
@@ -47,7 +47,7 @@ The goal of this project is to build a robust object detection model capable of 
     **Note on PyTorch:** The `ultralytics` package will install a version of PyTorch. Ensure it is the correct version for your hardware (CPU, NVIDIA GPU, or Apple Silicon). If you encounter issues, it's best to install PyTorch manually by following the instructions on the [official PyTorch website](https://pytorch.org/get-started/locally/).
 
 4.  **Configure Environment:**
-    Create a `.env` file in the root directory and populate it with your desired training parameters. An example is provided in the repository.
+    Configure your desired training parameters using a `.env` file in the root directory. An example is provided in the repository.
 
 ### Dataset
 
@@ -103,20 +103,20 @@ This step can be run multiple times to experiment with different fine-tuning hyp
     - Adjust `FINETUNE_EPOCHS`, `FINETUNE_LR`, and any other parameters you wish to experiment with.
 
 2.  **Run the Fine-Tuning Script:**
-    `bash
+    ```bash
     python finetune.py
-    `
-    A new experiment folder will be created inside `runs/train/finetuned_models/` containing your final model and results.
+    ```
+    A new experiment folder will be created inside `outputs/train/finetuned_models/` containing your final model and results.
 
 ### Evaluating the Model
 
 After training, use the `test.py` script to evaluate your final model's performance on the test sets.
 
-1.  **Update `.env`:** Set the `MODEL_TO_TEST_PATH` variable to the path of your best fine-tuned model (e.g., `runs/train/finetuned_models/your_finetune_run/weights/best.pt`).
+1.  **Update `.env`:** Set the `MODEL_TO_TEST_PATH` variable to the path of your best fine-tuned model (e.g., `outputs/train/finetuned_models/your_finetune_run/weights/best.pt`).
 2.  **Run Evaluation:**
-    `bash
+    ```bash
     python test.py
-    `
+    ```
     The script will generate a folder for each country within your `TEST_OUTPUT_DIR`, containing a `.txt` file for each test image with the predicted bounding boxes.
 
 ### Model Architecture and Parameters

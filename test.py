@@ -19,17 +19,16 @@ def test_model():
     device = os.getenv('DEVICE', 'cpu')
     img_size = int(os.getenv('IMG_SIZE', 640))
     batch_size = int(os.getenv('BATCH_SIZE', 16))
+    test_augment = os.getenv('TEST_AUGMENT', 'False').lower() == 'true'
+    iou_threshold = float(os.getenv('IOU_THRESHOLD', 0.5))
 
     # --- 2. Validate paths and settings ---
     if not model_to_test_path or not Path(model_to_test_path).exists():
         print(f"Error: MODEL_TO_TEST_PATH is not set in .env or the file does not exist.")
-        print("Please set it to the 'best.pt' file from a training run.")
         return
-
     if not dataset_dir:
         print("Error: DATASET_DIR is not set in the .env file.")
         return
-
     if not team_name or team_name == 'YourTeamName':
         print("Error: TEAM_NAME is not correctly set in your .env file.")
         return
@@ -38,8 +37,8 @@ def test_model():
     print(f"Team Name: {team_name}")
     print(f"Using Device: {device.upper()}")
     print(f"Model to Test: {model_to_test_path}")
-    print(f"Dataset Path: {dataset_dir}")
-    print(f"Confidence Threshold: {confidence_threshold}")
+    print(f"Test-Time Augmentation: {test_augment}")
+    print(f"Confidence Threshold: {confidence_threshold}, IoU Threshold: {iou_threshold}")
     print("------------------------------------\n")
 
     model_weights = Path(model_to_test_path)
@@ -93,7 +92,7 @@ def test_model():
         image_files = list(test_images_path.glob('*.jpg'))
 
         for image_path in image_files:
-            results = model(image_path, device=device, verbose=False)
+            results = model(image_path, device=device, verbose=False, augment=test_augment, iou=iou_threshold, conf=confidence_threshold)
 
             output_filename = image_path.with_suffix('.txt').name
             output_filepath = submission_folder / output_filename
@@ -101,12 +100,11 @@ def test_model():
             with open(output_filepath, 'w') as f:
                 for result in results:
                     for box in result.boxes:
-                        if box.conf[0] > confidence_threshold:
-                            class_id = int(box.cls[0])
-                            confidence = float(box.conf[0])
-                            xywhn = box.xywhn[0]
-                            x_center, y_center, width, height = xywhn
-                            f.write(f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f} {confidence:.6f}\n")
+                        class_id = int(box.cls[0])
+                        confidence = float(box.conf[0])
+                        xywhn = box.xywhn[0]
+                        x_center, y_center, width, height = xywhn
+                        f.write(f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f} {confidence:.6f}\n")
             total_predictions += 1
 
     print(f"\n✅ Submission folder generated successfully!")

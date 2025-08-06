@@ -87,7 +87,8 @@ def train_base_model():
         imgsz=img_size,
         optimizer=optimizer,
         lr0=base_lr,
-        freeze=freeze_layers
+        freeze=freeze_layers,
+        cache=True,
     )
 
     print(f"\n✅ Base model training complete. Model saved in {base_output_dir}/{run_name}")

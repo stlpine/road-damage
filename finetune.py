@@ -109,6 +109,7 @@ def finetune_model():
         momentum=momentum,
         lr0=finetune_lr,
         freeze=0, # Unfreeze all layers
+        cache=True,
         hsv_h=hsv_h, hsv_s=hsv_s, hsv_v=hsv_v,
         degrees=degrees, translate=translate, scale=scale, fliplr=fliplr, mosaic=mosaic
     )

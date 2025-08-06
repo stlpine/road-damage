@@ -4,6 +4,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from ultralytics import YOLO
 
+# --- Weighted Boxes Fusion (WBF) Implementation ---
+# This is a Python implementation of the WBF algorithm.
 def weighted_boxes_fusion(boxes_list, scores_list, labels_list, weights=None, iou_thr=0.55, skip_box_thr=0.0):
     """
     Performs Weighted Boxes Fusion on a list of boxes from different models.
@@ -113,6 +115,8 @@ def test_ensemble():
     dataset_dir = os.getenv('DATASET_DIR')
     device = os.getenv('DEVICE', 'cpu')
     confidence_threshold = 0.01 # Use a low threshold to get more boxes for fusion
+    img_size = int(os.getenv('IMG_SIZE', 640))
+    batch_size = int(os.getenv('BATCH_SIZE', 16))
 
     # --- 2. Validate paths and settings ---
     if not model_paths_str:
@@ -134,8 +138,9 @@ def test_ensemble():
     print(f"Loaded {len(models)} models for ensembling.")
 
     # --- 4. Create Submission Folder ---
-    model_names = "-".join(sorted([Path(p).parent.parent.name.split('_')[1] for p in model_paths]))
-    experiment_name = f"Ensemble-{model_names}"
+    num_models = len(models)
+    hyperparam_tag = f"img{img_size}-b{batch_size}"
+    experiment_name = f"Ensemble-{num_models}models-{hyperparam_tag}"
     submission_folder = Path(f"./{team_name}/{team_name}_{experiment_name}")
     submission_folder.mkdir(parents=True, exist_ok=True)
     print(f"Creating submission folder at: {submission_folder.resolve()}")

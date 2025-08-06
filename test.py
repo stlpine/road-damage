@@ -12,17 +12,13 @@ def test_model():
     # --- 1. Load Configuration from .env file ---
     load_dotenv()
 
-    # NOTE: You must add these variables to your .env file before running.
-    # Example:
-    # TEAM_NAME=MyAwesomeTeam
-    # MODEL_TO_TEST_PATH=runs/train/finetuned_models/your_run/weights/best.pt
-    # CONFIDENCE_THRESHOLD=0.25
-
     team_name = os.getenv('TEAM_NAME')
     model_to_test_path = os.getenv('MODEL_TO_TEST_PATH')
     dataset_dir = os.getenv('DATASET_DIR')
     confidence_threshold = float(os.getenv('CONFIDENCE_THRESHOLD', 0.25))
     device = os.getenv('DEVICE', 'cpu')
+    img_size = int(os.getenv('IMG_SIZE', 640))
+    batch_size = int(os.getenv('BATCH_SIZE', 16))
 
     # --- 2. Validate paths and settings ---
     if not model_to_test_path or not Path(model_to_test_path).exists():
@@ -50,22 +46,16 @@ def test_model():
     main_dataset_path = Path(dataset_dir)
 
     # --- 3. Create the final submission folder structure ---
-    # Get the experiment name from the parent directory of the model weights
     experiment_name = model_weights.parent.parent.name
-    model_name_tag = "model" # Default model name tag
+    model_name_tag = "model"
 
-    # Try to parse the base model name from the training args for a more descriptive folder name
     try:
         args_path = model_weights.parent.parent / 'args.yaml'
         if args_path.exists():
             with open(args_path, 'r') as f:
                 args = yaml.safe_load(f)
-                # The 'model' key holds the path to the weights this run started from
                 start_model_path = Path(args.get('model', ''))
-                # The base model name is in the parent directory name of the base model weights
-                # e.g., .../20250805_163000_yolov8n_base/weights/best.pt -> we want 'yolov8n'
                 base_model_run_name = start_model_path.parent.parent.name
-                # Find the model architecture part (e.g., 'yolov8n', 'yolov8s')
                 for part in base_model_run_name.split('_'):
                     if 'yolov8' in part:
                         model_name_tag = part
@@ -73,8 +63,8 @@ def test_model():
     except Exception as e:
         print(f"Warning: Could not parse base model name from args.yaml. Using default. Error: {e}")
 
-    # Clean the experiment name to remove invalid characters for folder names
-    experiment_name_clean = f"{model_name_tag}-{experiment_name.replace('_', '-')}"
+    hyperparam_tag = f"img{img_size}-b{batch_size}"
+    experiment_name_clean = f"{model_name_tag}-{experiment_name.replace('_', '-')}-{hyperparam_tag}"
 
     submission_folder = Path(f"./{team_name}/{team_name}_{experiment_name_clean}")
     submission_folder.mkdir(parents=True, exist_ok=True)
@@ -87,7 +77,7 @@ def test_model():
 
     # Find country directories
     country_dirs = [d for d in main_dataset_path.iterdir() if d.is_dir()]
-
+    
     if not country_dirs:
         print("Error: No country directories found in the dataset folder.")
         return
@@ -103,10 +93,8 @@ def test_model():
         image_files = list(test_images_path.glob('*.jpg'))
 
         for image_path in image_files:
-            # Run inference on the image
             results = model(image_path, device=device, verbose=False)
 
-            # The output file will have the same name as the image but with a .txt extension
             output_filename = image_path.with_suffix('.txt').name
             output_filepath = submission_folder / output_filename
 
@@ -126,5 +114,4 @@ def test_model():
     print(f"   - Your submission is ready in the '{team_name}' folder.")
 
 if __name__ == '__main__':
-    # --- Run the testing process ---
     test_model()

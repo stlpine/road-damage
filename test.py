@@ -1,4 +1,5 @@
 import os
+import yaml
 from pathlib import Path
 from dotenv import load_dotenv
 from ultralytics import YOLO
@@ -51,8 +52,29 @@ def test_model():
     # --- 3. Create the final submission folder structure ---
     # Get the experiment name from the parent directory of the model weights
     experiment_name = model_weights.parent.parent.name
+    model_name_tag = "model" # Default model name tag
+
+    # Try to parse the base model name from the training args for a more descriptive folder name
+    try:
+        args_path = model_weights.parent.parent / 'args.yaml'
+        if args_path.exists():
+            with open(args_path, 'r') as f:
+                args = yaml.safe_load(f)
+                # The 'model' key holds the path to the weights this run started from
+                start_model_path = Path(args.get('model', ''))
+                # The base model name is in the parent directory name of the base model weights
+                # e.g., .../20250805_163000_yolov8n_base/weights/best.pt -> we want 'yolov8n'
+                base_model_run_name = start_model_path.parent.parent.name
+                # Find the model architecture part (e.g., 'yolov8n', 'yolov8s')
+                for part in base_model_run_name.split('_'):
+                    if 'yolov8' in part:
+                        model_name_tag = part
+                        break
+    except Exception as e:
+        print(f"Warning: Could not parse base model name from args.yaml. Using default. Error: {e}")
+
     # Clean the experiment name to remove invalid characters for folder names
-    experiment_name_clean = experiment_name.replace('_', '-')
+    experiment_name_clean = f"{model_name_tag}-{experiment_name.replace('_', '-')}"
 
     submission_folder = Path(f"./{team_name}/{team_name}_{experiment_name_clean}")
     submission_folder.mkdir(parents=True, exist_ok=True)

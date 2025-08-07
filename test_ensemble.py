@@ -18,6 +18,7 @@ def test_ensemble():
     device = os.getenv('DEVICE', 'cpu')
     confidence_threshold = float(os.getenv('CONFIDENCE_THRESHOLD', 0.25))
     iou_threshold = float(os.getenv('IOU_THRESHOLD', 0.5))
+    test_augment = os.getenv('TEST_AUGMENT', 'False').lower() == 'true'
     img_size = int(os.getenv('IMG_SIZE', 640))
     batch_size = int(os.getenv('BATCH_SIZE', 16))
 
@@ -43,7 +44,7 @@ def test_ensemble():
     # --- 4. Create Submission Folder ---
     num_models = len(models)
     hyperparam_tag = f"img{img_size}-b{batch_size}"
-    experiment_name = f"Ensemble-NMS-{num_models}models-{hyperparam_tag}"
+    experiment_name = f"ensemble-nms-{num_models}models-{hyperparam_tag}"
     submission_folder = Path(f"./{team_name}/{team_name}_{experiment_name}")
     submission_folder.mkdir(parents=True, exist_ok=True)
     print(f"Creating submission folder at: {submission_folder.resolve()}")
@@ -66,7 +67,7 @@ def test_ensemble():
             # Get predictions from each model
             for model in models:
                 # Use a low confidence threshold to gather all possible boxes for NMS
-                results = model(image_path, device=device, verbose=False, conf=0.01)
+                results = model(image_path, device=device, verbose=False, conf=0.01, augment=test_augment)
 
                 all_boxes.append(results[0].boxes.xyxyn.cpu())
                 all_scores.append(results[0].boxes.conf.cpu())
